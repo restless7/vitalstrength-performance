@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vital-accent: #ff741f;
+  --color-vital-dark: #111111;
+  --color-vital-light: #f7f7f7;
+  --font-heading: "Montserrat", "Poppins", sans-serif;
+  --font-sans: "Open Sans", "Roboto", sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-vital-light);
+    color: var(--color-vital-dark);
+    font-family: var(--font-sans);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+  }
+}
+
+.clip-slanted {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+}
+
+.clip-slanted-reverse {
+  clip-path: polygon(0 15%, 100% 0, 100% 100%, 0% 100%);
+}

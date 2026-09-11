@@ -1,0 +1,158 @@
+// VSP Prime — Supabase PostgreSQL Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  HEAD_COACH
+  CLINICAL_STAFF
+  BJJ_INSTRUCTOR
+  CLIENT_VIP_1ON1
+  CLIENT_ADVANCED
+}
+
+enum AthleteStatus {
+  ACTIVE
+  PENDING_LABS
+  RENEWAL_DUE
+  INACTIVE
+}
+
+enum SessionStatus {
+  SCHEDULED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum SessionType {
+  PRESENCIAL_1ON1
+  BJJ_SPARRING
+  FORM_CHECK
+}
+
+model Athlete {
+  id                String        @id @default(cuid())
+  clerkUserId       String?       @unique
+  name              String
+  email             String        @unique
+  phone             String
+  tierId            String
+  tierName          String
+  status            AthleteStatus @default(ACTIVE)
+  totalT            Float?
+  freeT             Float?
+  sessionsLeft      Int           @default(12)
+  lastCheckin       String?
+  mrrUSD            Float         @default(799.0)
+  startDate         String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  bloodworkRecords  BloodworkRecord[]
+  protocols         ProtocolPrescription[]
+  sessions          SessionRecord[]
+
+  @@index([status])
+  @@index([tierId])
+}
+
+model BloodworkRecord {
+  id                     String   @id @default(cuid())
+  athleteId              String
+  totalTestosteroneNgDl  Float
+  freeTestosteronePgMl   Float
+  estradiolPgMl          Float
+  shbgNmolL              Float
+  hba1cPercent           Float
+  encryptedDoctorNotes   String
+  authTag                String
+  status                 String   @default("REVIEWED_APPROVED")
+  reviewedBy             String
+  reviewedAt             DateTime @default(now())
+  createdAt              DateTime @default(now())
+
+  athlete                Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+}
+
+model ProtocolPrescription {
+  id                     String   @id @default(cuid())
+  athleteId              String
+  clembuterolDose        String
+  omega3                 String
+  magnesium              String
+  protein                String
+  water                  String
+  fastingWindow          String
+  encryptedClinicalNotes String
+  authTag                String
+  issuedBy               String
+  issuedAt               DateTime @default(now())
+  createdAt              DateTime @default(now())
+
+  athlete                Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+}
+
+model SessionRecord {
+  id            String        @id @default(cuid())
+  athleteId     String
+  athleteName   String
+  coachName     String
+  type          SessionType   @default(PRESENCIAL_1ON1)
+  title         String
+  date          String
+  timeSlot      String
+  location      String
+  status        SessionStatus @default(SCHEDULED)
+  notes         String?
+  qrCodeToken   String?
+  createdAt     DateTime      @default(now())
+
+  athlete       Athlete       @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+  @@index([date])
+  @@index([status])
+}
+
+model MembershipProgram {
+  id                    String   @id
+  name                  String
+  priceUSD              Float
+  billingInterval       String   @default("MONTHLY")
+  description           String
+  activeSubscriberCount Int      @default(0)
+  totalRevenueUSD       Float    @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  actorUserId String
+  actorRole   String
+  action      String
+  resourceId  String
+  ipAddress   String   @default("127.0.0.1")
+  details     String
+  signature   String
+
+  @@index([actorUserId])
+  @@index([resourceId])
+  @@index([timestamp])
+}

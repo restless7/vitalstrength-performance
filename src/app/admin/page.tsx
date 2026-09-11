@@ -232,6 +232,7 @@ function AdminDashboardContent() {
             { id: 'bloodwork', label: 'Laboratorio & Sangre', icon: Activity },
             { id: 'sessions', label: 'Sesiones 1:1 & BJJ', icon: Calendar },
             { id: 'pricing', label: 'Precios & Tarifas USD', icon: DollarSign },
+            { id: 'users', label: 'Usuarios & Roles Clerk', icon: UserPlus },
             { id: 'settings', label: 'Auditoría & RBAC', icon: Settings },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -888,6 +889,132 @@ function AdminDashboardContent() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 8: USERS & CLERK ROLES MANAGEMENT */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold font-heading uppercase text-white flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-vital-accent" />
+                  <span>Gestión de Usuarios & Asignación de Roles Clerk</span>
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Administre permisos RBAC, configure metadata pública de Clerk y otorgue roles administrativos a entrenadores y personal clínico.
+                </p>
+              </div>
+              <div className="bg-vital-accent/10 border border-vital-accent/30 px-3 py-2 rounded-xl flex items-center gap-2 text-xs text-vital-accent">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="font-bold uppercase text-[10px]">Clerk Sync API: Activa</span>
+              </div>
+            </div>
+
+            {/* Quick Metadata Copy Helper Banner */}
+            <div className="bg-black/60 border border-vital-accent/30 p-4 rounded-xl mb-6">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+                <Key className="w-4 h-4 text-vital-accent" />
+                <span>Instrucciones para primer Administrador (Clerk Dashboard or cURL)</span>
+              </h4>
+              <p className="text-xs text-gray-300 mb-3">
+                Para otorgar rol de <strong>HEAD_COACH</strong> a su usuario recién registrado en Clerk Dashboard:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-mono">
+                <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                  <span className="text-vital-accent font-bold block mb-1">Opción A: Clerk Public Metadata (JSON)</span>
+                  <pre className="text-gray-300 bg-black/80 p-2 rounded border border-white/5 font-mono overflow-x-auto">
+{`{
+  "role": "HEAD_COACH"
+}`}
+                  </pre>
+                </div>
+                <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                  <span className="text-vital-accent font-bold block mb-1">Opción B: cURL Direct API</span>
+                  <pre className="text-gray-300 bg-black/80 p-2 rounded border border-white/5 font-mono overflow-x-auto text-[10px]">
+{`curl -X PATCH "https://api.clerk.com/v1/users/USER_ID" \\
+  -H "Authorization: Bearer SECRET_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"public_metadata":{"role":"HEAD_COACH"}}'`}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Staff Users List Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400 font-mono text-[10px] uppercase">
+                    <th className="py-3 px-4">Usuario / Email</th>
+                    <th className="py-3 px-4">Clerk User ID</th>
+                    <th className="py-3 px-4">Rol Asignado</th>
+                    <th className="py-3 px-4">Permisos Matriz</th>
+                    <th className="py-3 px-4 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {[
+                    { id: 'usr_head_coach_001', name: 'Alejandro Sánchez Galán', email: 'alex@vitalstrength.pa', role: 'HEAD_COACH', permissions: ['Todas las Funciones', 'Prescripciones', 'Finanzas', 'RBAC'] },
+                    { id: 'usr_clinical_002', name: 'Dra. Elena Ruiz', email: 'elena@vitalstrength.pa', role: 'CLINICAL_STAFF', permissions: ['Prescripciones', 'Laboratorios', 'PII Sangre'] },
+                    { id: 'usr_bjj_003', name: 'Prof. Marcos Silva', email: 'marcos@vitalstrength.pa', role: 'BJJ_INSTRUCTOR', permissions: ['Sesiones 1:1', 'Combate Sparring'] },
+                  ].map((st) => (
+                    <tr key={st.id} className="hover:bg-white/5 transition-all">
+                      <td className="py-3 px-4">
+                        <p className="font-bold text-white">{st.name}</p>
+                        <p className="text-[11px] text-gray-400 font-mono">{st.email}</p>
+                      </td>
+                      <td className="py-3 px-4 font-mono text-gray-400 text-[10px]">{st.id}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
+                          st.role === 'HEAD_COACH' ? 'bg-vital-accent/20 text-vital-accent border-vital-accent/40' :
+                          st.role === 'CLINICAL_STAFF' ? 'bg-blue-500/20 text-blue-400 border-blue-500/40' :
+                          'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        }`}>
+                          {st.role}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1">
+                          {st.permissions.map((pm, i) => (
+                            <span key={i} className="bg-white/5 text-gray-300 text-[9px] px-1.5 py-0.5 rounded">
+                              {pm}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={async () => {
+                            setApiResponse({ status: 'loading' });
+                            try {
+                              const res = await fetch('/api/admin/users', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'x-user-role': currentRole },
+                                body: JSON.stringify({ userId: st.id, role: st.role }),
+                              });
+                              const json = await res.json();
+                              if (json.success) {
+                                setApiResponse({ status: 'success', message: json.message, auditSignature: json.data?.auditSignature });
+                              } else {
+                                setApiResponse({ status: 'error', message: json.error });
+                              }
+                            } catch (err: any) {
+                              setApiResponse({ status: 'error', message: err.message });
+                            }
+                          }}
+                          className="px-3 py-1 bg-vital-accent/20 hover:bg-vital-accent text-vital-accent hover:text-white border border-vital-accent/40 text-[10px] font-bold uppercase rounded-lg transition-all"
+                        >
+                          Sincronizar Role
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

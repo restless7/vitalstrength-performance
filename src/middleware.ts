@@ -1,15 +1,20 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
+const isAdminApiRoute = createRouteMatcher(['/api/admin(.*)']);
+const isAdminPageRoute = createRouteMatcher(['/admin(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
-  // If Clerk publishable key is missing, skip middleware blocking to allow dev fallback
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  // Skip middleware blocking if publishable key missing or dev role simulation explicitly enabled
+  if (
+    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    process.env.ALLOW_DEV_ROLE_SIMULATION === 'true'
+  ) {
     return NextResponse.next();
   }
 
-  if (isAdminRoute(req)) {
+  // 1. Admin API endpoints -> return JSON 401 if unauthenticated in production
+  if (isAdminApiRoute(req)) {
     const session = await auth();
     if (!session.userId && process.env.NODE_ENV === 'production') {
       return NextResponse.json(
@@ -17,6 +22,11 @@ export default clerkMiddleware(async (auth, req) => {
         { status: 401 }
       );
     }
+  }
+
+  // 2. Admin Page routes -> redirect unauthenticated browser users to Clerk Sign-In
+  if (isAdminPageRoute(req)) {
+    await auth.protect();
   }
 
   return NextResponse.next();
